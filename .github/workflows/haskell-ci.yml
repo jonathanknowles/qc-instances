@@ -8,9 +8,9 @@
 #
 # For more information, see https://github.com/haskell-CI/haskell-ci
 #
-# version: 0.19.20250605
+# version: 0.19.20260104
 #
-# REGENDATA ("0.19.20250605",["github","cabal.project"])
+# REGENDATA ("0.19.20260104",["github","cabal.project"])
 #
 name: Haskell-CI
 on:
@@ -18,6 +18,9 @@ on:
     branches:
       - master
   pull_request:
+    branches:
+      - master
+  merge_group:
     branches:
       - master
 jobs:
@@ -72,16 +75,6 @@ jobs:
             compilerVersion: 8.10.7
             setup-method: ghcup
             allow-failure: false
-          - compiler: ghc-8.8.4
-            compilerKind: ghc
-            compilerVersion: 8.8.4
-            setup-method: ghcup
-            allow-failure: false
-          - compiler: ghc-8.6.5
-            compilerKind: ghc
-            compilerVersion: 8.6.5
-            setup-method: ghcup
-            allow-failure: false
       fail-fast: false
     steps:
       - name: apt-get install
@@ -95,8 +88,8 @@ jobs:
           chmod a+x "$HOME/.ghcup/bin/ghcup"
       - name: Install cabal-install
         run: |
-          "$HOME/.ghcup/bin/ghcup" install cabal 3.14.2.0 || (cat "$HOME"/.ghcup/logs/*.* && false)
-          echo "CABAL=$HOME/.ghcup/bin/cabal-3.14.2.0 -vnormal+nowrap" >> "$GITHUB_ENV"
+          "$HOME/.ghcup/bin/ghcup" install cabal 3.16.0.0 || (cat "$HOME"/.ghcup/logs/*.* && false)
+          echo "CABAL=$HOME/.ghcup/bin/cabal-3.16.0.0 -vnormal+nowrap" >> "$GITHUB_ENV"
       - name: Install GHC (GHCup)
         if: matrix.setup-method == 'ghcup'
         run: |
@@ -172,7 +165,7 @@ jobs:
           chmod a+x $HOME/.cabal/bin/cabal-plan
           cabal-plan --version
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: source
       - name: initial cabal.project for sdist
@@ -197,7 +190,11 @@ jobs:
           touch cabal.project.local
           echo "packages: ${PKGDIR_quickcheck_instances}" >> cabal.project
           echo "package quickcheck-instances" >> cabal.project
-          echo "    ghc-options: -Werror=missing-methods" >> cabal.project
+          echo "    ghc-options: -Werror=missing-methods -Werror=missing-fields" >> cabal.project
+          if [ $((HCNUMVER >= 90400)) -ne 0 ] ; then echo "package quickcheck-instances" >> cabal.project ; fi
+          if [ $((HCNUMVER >= 90400)) -ne 0 ] ; then echo "    ghc-options: -Werror=unused-packages" >> cabal.project ; fi
+          if [ $((HCNUMVER >= 90000)) -ne 0 ] ; then echo "package quickcheck-instances" >> cabal.project ; fi
+          if [ $((HCNUMVER >= 90000)) -ne 0 ] ; then echo "    ghc-options: -Werror=incomplete-patterns -Werror=incomplete-uni-patterns" >> cabal.project ; fi
           cat >> cabal.project <<EOF
           allow-newer: these:base
           EOF
@@ -255,12 +252,12 @@ jobs:
           if [ $((HCNUMVER < 90400)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='text ^>=1.2.3.0' --dependencies-only -j2 all ; fi
           if [ $((HCNUMVER < 90400)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='text ^>=1.2.3.0' all ; fi
           if [ $((HCNUMVER < 90400)) -ne 0 ] ; then $CABAL v2-test $ARG_COMPILER --enable-tests --disable-benchmarks --constraint='text ^>=1.2.3.0' all ; fi
-      - name: constraint set lower-bounds-8.6.5
+      - name: constraint set lower-bounds-8.10.7
         run: |
-          if [ $((HCNUMVER < 80800)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='QuickCheck ==2.14.2' --constraint='array ==0.5.3.0' --constraint='base ==4.12.0.0' --constraint='bytestring ==0.10.8.2' --constraint='case-insensitive ==1.2.0.11' --constraint='containers ==0.6.0.1' --constraint='hashable ==1.4.4.0' --constraint='old-time ==1.1.0.0' --constraint='OneTuple ==0.4.2' --constraint='scientific ==0.3.8.0' --constraint='primitive ==0.9.0.0' --constraint='strict ==0.5' --constraint='tagged ==0.8.8' --constraint='text ==1.2.3.0' --constraint='these ==1.2.1' --constraint='transformers ==0.5.6.2' --constraint='unordered-containers ==0.2.20' --constraint='uuid-types ==1.0.6' --constraint='vector ==0.13.2.0' all --dry-run ; fi
-          if [ $((HCNUMVER < 80800)) -ne 0 ] ; then cabal-plan topo | sort ; fi
-          if [ $((HCNUMVER < 80800)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='QuickCheck ==2.14.2' --constraint='array ==0.5.3.0' --constraint='base ==4.12.0.0' --constraint='bytestring ==0.10.8.2' --constraint='case-insensitive ==1.2.0.11' --constraint='containers ==0.6.0.1' --constraint='hashable ==1.4.4.0' --constraint='old-time ==1.1.0.0' --constraint='OneTuple ==0.4.2' --constraint='scientific ==0.3.8.0' --constraint='primitive ==0.9.0.0' --constraint='strict ==0.5' --constraint='tagged ==0.8.8' --constraint='text ==1.2.3.0' --constraint='these ==1.2.1' --constraint='transformers ==0.5.6.2' --constraint='unordered-containers ==0.2.20' --constraint='uuid-types ==1.0.6' --constraint='vector ==0.13.2.0' --dependencies-only -j2 all ; fi
-          if [ $((HCNUMVER < 80800)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='QuickCheck ==2.14.2' --constraint='array ==0.5.3.0' --constraint='base ==4.12.0.0' --constraint='bytestring ==0.10.8.2' --constraint='case-insensitive ==1.2.0.11' --constraint='containers ==0.6.0.1' --constraint='hashable ==1.4.4.0' --constraint='old-time ==1.1.0.0' --constraint='OneTuple ==0.4.2' --constraint='scientific ==0.3.8.0' --constraint='primitive ==0.9.0.0' --constraint='strict ==0.5' --constraint='tagged ==0.8.8' --constraint='text ==1.2.3.0' --constraint='these ==1.2.1' --constraint='transformers ==0.5.6.2' --constraint='unordered-containers ==0.2.20' --constraint='uuid-types ==1.0.6' --constraint='vector ==0.13.2.0' all ; fi
+          if [ $((HCNUMVER < 90000)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='QuickCheck ==2.17.1.0' --constraint='array ==0.5.4.0' --constraint='base ==4.14.3.0' --constraint='bytestring ==0.10.12.0' --constraint='case-insensitive ==1.2.0.11' --constraint='hashable ==1.4.4.0' --constraint='old-time ==1.1.0.0' --constraint='OneTuple ==0.4.2' --constraint='scientific ==0.3.8.0' --constraint='primitive ==0.9.0.0' --constraint='strict ==0.5' --constraint='tagged ==0.8.8' --constraint='text ==1.2.4.1' --constraint='these ==1.2.1' --constraint='transformers ==0.5.6.2' --constraint='unordered-containers ==0.2.20' --constraint='uuid-types ==1.0.6' --constraint='vector ==0.13.2.0' all --dry-run ; fi
+          if [ $((HCNUMVER < 90000)) -ne 0 ] ; then cabal-plan topo | sort ; fi
+          if [ $((HCNUMVER < 90000)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='QuickCheck ==2.17.1.0' --constraint='array ==0.5.4.0' --constraint='base ==4.14.3.0' --constraint='bytestring ==0.10.12.0' --constraint='case-insensitive ==1.2.0.11' --constraint='hashable ==1.4.4.0' --constraint='old-time ==1.1.0.0' --constraint='OneTuple ==0.4.2' --constraint='scientific ==0.3.8.0' --constraint='primitive ==0.9.0.0' --constraint='strict ==0.5' --constraint='tagged ==0.8.8' --constraint='text ==1.2.4.1' --constraint='these ==1.2.1' --constraint='transformers ==0.5.6.2' --constraint='unordered-containers ==0.2.20' --constraint='uuid-types ==1.0.6' --constraint='vector ==0.13.2.0' --dependencies-only -j2 all ; fi
+          if [ $((HCNUMVER < 90000)) -ne 0 ] ; then $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --constraint='QuickCheck ==2.17.1.0' --constraint='array ==0.5.4.0' --constraint='base ==4.14.3.0' --constraint='bytestring ==0.10.12.0' --constraint='case-insensitive ==1.2.0.11' --constraint='hashable ==1.4.4.0' --constraint='old-time ==1.1.0.0' --constraint='OneTuple ==0.4.2' --constraint='scientific ==0.3.8.0' --constraint='primitive ==0.9.0.0' --constraint='strict ==0.5' --constraint='tagged ==0.8.8' --constraint='text ==1.2.4.1' --constraint='these ==1.2.1' --constraint='transformers ==0.5.6.2' --constraint='unordered-containers ==0.2.20' --constraint='uuid-types ==1.0.6' --constraint='vector ==0.13.2.0' all ; fi
       - name: save cache
         if: always()
         uses: actions/cache/save@v4
