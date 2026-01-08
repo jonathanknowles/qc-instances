@@ -1,15 +1,14 @@
 branches: master
 head-hackage: False
 
-constraint-set lower-bounds-8.6.5
-  ghc: ==8.6.5
+constraint-set lower-bounds-8.10.7
+  ghc: ==8.10.7
   constraints:
-    QuickCheck             ==2.14.2,
-    array                  ==0.5.3.0,
-    base                   ==4.12.0.0,
-    bytestring             ==0.10.8.2,
+    QuickCheck             ==2.17.1.0,
+    array                  ==0.5.4.0,
+    base                   ==4.14.3.0,
+    bytestring             ==0.10.12.0,
     case-insensitive       ==1.2.0.11,
-    containers             ==0.6.0.1,
     hashable               ==1.4.4.0,
     old-time               ==1.1.0.0,
     OneTuple               ==0.4.2,
@@ -17,7 +16,7 @@ constraint-set lower-bounds-8.6.5
     primitive              ==0.9.0.0,
     strict                 ==0.5,
     tagged                 ==0.8.8,
-    text                   ==1.2.3.0,
+    text                   ==1.2.4.1,
     these                  ==1.2.1,
     transformers           ==0.5.6.2,
     unordered-containers   ==0.2.20,
